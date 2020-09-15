@@ -5,7 +5,7 @@ import matplotlib.animation as animation
 from matplotlib.patches import Ellipse
 
 fig = plt.figure(figsize=(8, 8), facecolor = 'black')
-ax = plt.subplot(111, frameon=False)
+ax = plt.subplot(111, frameon=True, projection = 'polar')
 
 #scattered ellipses
 def scatter_ellipse(*args):
@@ -34,9 +34,9 @@ def scatter_circles(*args):
     return plt.scatter(x, y, s=area, c=colors, alpha= 0.8)
 
 #Rainbow curves
+p = ['red', 'orange', 'gold', 'lawngreen', 'lightseagreen', 'royalblue', 'blueviolet']
 def curve():
     x = np.arange(0, 2*np.pi, 0.1)
-    p = ['red', 'orange', 'gold', 'lawngreen', 'lightseagreen', 'royalblue', 'blueviolet']
 
     lines = []
     for i in range(0, 7):
@@ -44,18 +44,31 @@ def curve():
         lines.append(line,)
     return lines
 
-lines = curve()
 def curve_anim(i):
     x = np.arange(0, 2*np.pi, 0.1)
-    print(i)
     for j in range(0, 7): lines[j].set_ydata(np.sin(x - (j/10) + i / 10))
     return lines
 
+def polar_curve():
+    theta = np.arange(0, 6*np.pi, 0.05)
+    r = ((1+ np.sqrt(5))/2)**(theta *(2/(np.pi)))
+    ax.set_rmax(np.max(r))
+    ax.set_rticks([1.0, 2.0, 3.0, 4.0])
+    ax.grid(True)
+    ax.set_title("Golden Spiral", va = 'bottom')
+    return r, theta
+
+def curve_polar_anim(i):
+    return ax.plot(r[:i], theta[:i], color = p[2])
+
 if __name__ =='__main__':
-    ani = animation.FuncAnimation(fig, curve_anim, frames = 150, interval=2, save_count=100) #blit false
+    m = curve_polar_anim
+    if m == curve_anim:lines = curve()
+    if m == curve_polar_anim: r, theta = polar_curve()
 
-    #from matplotlib.animation import FFMpegWriter
-    #writer = FFMpegWriter(fps=20, metadata=dict(artist='Sham'),  bitrate=1800)
-    #ani.save("gifs/sines.mp4", writer=writer)
+    ani = animation.FuncAnimation(fig, m, frames = 180, interval=2, save_count=100) #blit false
 
-    plt.show()
+    from matplotlib.animation import FFMpegWriter
+    writer = FFMpegWriter(fps=24, metadata=dict(artist='Sham'),  bitrate=1800)
+    ani.save("videomp4/golden_spiral_grid.mp4", writer=writer)
+    #plt.show()
