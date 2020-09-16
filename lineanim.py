@@ -109,41 +109,7 @@ def music():
     #legend2 = ax.legend(handles, labels, loc="upper right", title="Sizes")
     return x_a, y_a, area, color
 
-
 def music_plot(i):
-    """with open('music_data/music.json') as out:
-        data = json.load(out)
-    x = []
-    y = []
-    area = []
-    color = []
-    j = 0
-    for k in data.keys():
-        for i in range(0,len(data[k])):
-            color.append(p[j])
-            x.append(data[k][i][f'track_{i}'][0]['features'][0]['year'])
-            y.append(data[k][i][f'track_{i}'][0]['features'][0]['properties']['loudness'])
-            area.append(data[k][i][f'track_{i}'][0]['features'][0]['properties']['speechiness'])
-        j += 1
-
-    x_a = np.array(x)
-    y_a = np.array(y)
-    area = np.array(area) * 70
-    #legend1 = ax.legend(*scatter.legend_elements(),
-                    #loc="lower left", title="Classes")
-    #ax.add_artist(legend1)
-    ax.set_xlim(1965, 2020)
-
-    #ax.set_ylim(np.linspace(-90, 1, 0.001))
-    ax.set_xticks(range(1970, 2020, 4))
-    #print(len(y_a))
-    #print(x_a)
-    #print(y_a)
-    #colors = np.random.rand(
-    #area =  # 0 to 15 point radii
-    # produce a legend with a cross section of sizes from the scatter
-    #handles, labels = scatter.legend_elements(prop="sizes", alpha=0.6)
-    #legend2 = ax.legend(handles, labels, loc="upper right", title="Sizes")"""
     return ax.scatter(x_a[:i], y_a[:i], s = area[:i], c = color[:i], alpha = 1)
 
 if __name__ =='__main__':
