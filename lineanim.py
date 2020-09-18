@@ -131,15 +131,35 @@ def save_entity(file_name):
     writer = FFMpegWriter(fps=35, metadata=dict(artist='Sham'),  bitrate=1800)
     ani.save(f"videomp4/{file_name}.mp4", writer=writer)
 
+def text_plot():
+    plt.text(0.6, 0.7, "banogi \U0001F60D", size=40, rotation=0.,
+         ha="center", va="center",
+         bbox=dict(boxstyle="round",
+                   ec=(1., 0.7, 0.5),
+                   fc=(1., 0.9, 0.9),
+                   )
+         )
+
+    plt.text(0.55, 0.6, "meri dost", size=50, rotation=-10.,
+         ha="right", va="top",
+         bbox=dict(boxstyle="square",
+                   ec=(1., 0.5, 0.5),
+                   fc=(1., 0.9, 0.8),
+                   )
+         )
+    
+    ax.grid(False)
+    #plt.savefig('dost.png')
+    plt.show()
 
 figure = canvas((8, 8), 'black') #Pass 2-tuple for frame size and color as string
 fig = figure._frame_()
-ax = figure._subplot_(111, True, 'red', 'polar') #Pass row, column, index as 111, bool value, color, projection
+ax = figure._subplot_(111, False, 'black', 'polar') #Pass row, column, index as 111, bool value, color, projection
 
 if __name__ =='__main__':
-    m = curve_polar_anim
+
+    m = None
     if m == curve_anim:lines = curve()
     if m == curve_polar_anim: r, theta = polar_curve()
     if m == music_plot: x_a, y_a, area, color = music()
     ani = animation.FuncAnimation(fig, m, frames = 600, interval=2, save_count=100) #blit false
-    plt.show()
