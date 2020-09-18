@@ -6,8 +6,22 @@ from matplotlib.patches import Ellipse
 import matplotlib.dates as mdates
 import matplotlib.cbook as cbook
 
-fig = plt.figure(figsize=(10, 10), facecolor = 'black')
-ax = plt.subplot(111, frameon=True, facecolor= 'slategrey')
+#fig = plt.figure(figsize=(10, 10), facecolor = 'black'
+
+class canvas:
+    def __init__(self, figsize, facecolor):
+        self.figsize = figsize
+        self.facecolor = facecolor
+        
+    def _frame_(self):
+        return plt.figure(figsize = self.figsize, facecolor = self.facecolor)
+
+    def _subplot_(self, rci, frame_bool, c, proj):
+        self.rci =  rci
+        self.frame_bool = frame_bool
+        self.proj = proj
+        self.c = c
+        return plt.subplot(self.rci, frameon = self.frame_bool, facecolor = self.c, projection = self.proj)
 
 #scattered ellipses
 def scatter_ellipse(*args):
@@ -112,16 +126,20 @@ def music():
 def music_plot(i):
     return ax.scatter(x_a[:i], y_a[:i], s = area[:i], c = color[:i], alpha = 1)
 
+def save_entity(file_name):
+    from matplotlib.animation import FFMpegWriter
+    writer = FFMpegWriter(fps=35, metadata=dict(artist='Sham'),  bitrate=1800)
+    ani.save(f"videomp4/{file_name}.mp4", writer=writer)
+
+
+figure = canvas((8, 8), 'black') #Pass 2-tuple for frame size and color as string
+fig = figure._frame_()
+ax = figure._subplot_(111, True, 'red', 'polar') #Pass row, column, index as 111, bool value, color, projection
+
 if __name__ =='__main__':
-    m = music_plot
+    m = curve_polar_anim
     if m == curve_anim:lines = curve()
     if m == curve_polar_anim: r, theta = polar_curve()
     if m == music_plot: x_a, y_a, area, color = music()
-    #plt.scatter(x_a, y_a, s = area, c = color, alpha = 1)
-    #plt.savefig('spotify_music_70s_00s2')
     ani = animation.FuncAnimation(fig, m, frames = 600, interval=2, save_count=100) #blit false
-
-    from matplotlib.animation import FFMpegWriter
-    writer = FFMpegWriter(fps=35, metadata=dict(artist='Sham'),  bitrate=1800)
-    ani.save("videomp4/spotify_music_70s_to_00s_color.mp4", writer=writer)
-    #plt.show()
+    plt.show()
