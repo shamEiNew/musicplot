@@ -4,6 +4,10 @@ from os import environ
 
 
 def configure():
+    """
+    Client id and secret are defined as environmental variables.
+
+    """
     cs_id = environ['CLIENT_ID']
     cs_secret = environ['CLIENT_SECRET']
 
@@ -57,11 +61,20 @@ def initiate_collection(sp):
 
 def albums(sp, artist_ids):
     start_time = time.time()
-    final_data = {}
-    count_a = 0
     for ids in artist_ids:
+        
+        """
+        Included only studio albums due to system limitations as data size
+        will grow further with duplicates which require further filtering.
+        In this we use the paging object 'next' described in the API. But it's far
+        slower as compared to the technique used in collect_data for decades because there we
+        looked at the data and accessed values directly by keys. Moreover, this also calls track
+        object therefore expected to be slower. To fetch 54 artist details it took 45 minutes
+        in total. I haven't included the track popularity parameter as the most new tracks and
+        singles will have always a higher number (this is also described in the api page).
+
+        """
         artist_albums = sp.artist_albums(artist_id = ids, album_type='album', country=None, limit=50, offset=0)
-        counter = 0
         tracks_ids = []
         data_artists = {}
         albums_list = []
@@ -73,21 +86,28 @@ def albums(sp, artist_ids):
                         album_tracks = []
                         for __, track in enumerate(tracks['items']):
                             if track['id'] not in tracks_ids:
+
                                 f = sp.audio_features(track['id'])
                                 f = {k:f[0][k] for k in f[0].keys() if k not in ["type","id", "uri", "track_href","analysis_url","duration_ms","time_signature"]}
                                 album_tracks.append({'track_name':track['name'],'track_id':track['id'], 'features':[f]})
-                                #rint(f"{track['id']} \t {track['name']} \t {track['uri']}")
+                        
                         if tracks['next']:
                             tracks = sp.next(tracks)
                         else:
-                            albums_list.append({'album_name': album['name'], 'release_date': album['release_date'], 'tracks':album_tracks})
+                            """
+                            Need to call sp.album() as api endoint returns a simplied object
+                            for the artist_albums which has no populartity key.
+                            """
+                            albums_list.append({'album_name': album['name'],'album_popularity':sp.album(album_id = album['id'])['popularity'], 'release_date': album['release_date'], 'tracks':album_tracks})
                             tracks = None
         
             if artist_albums['next']:
                 artist_albums =  sp.next(artist_albums)
             else:
                 artist_albums =  None
-
+        """
+        Albums get duplicated needed to remove a better block is needed here.
+        """
         filter_index = []
         albums_list_filtered = []
 
@@ -101,24 +121,69 @@ def albums(sp, artist_ids):
                 albums_list_filtered.append(albums_list[k])
 
         data_artists['artist_name'] = sp.artist(artist_id = ids)['name']
+        data_artists['artist_id'] = ids
         data_artists['albums_full'] = albums_list_filtered
-        final_data[f'artist_{count_a}'] = [data_artists]
-        count_a += 1
+        print(time.time()-start_time)
+        """
+        Returning as list for each artist containing name, album details, and track details.
+        """
+        return [data_artists]
     
-    file_in = json.dumps(final_data, indent = 4)
-    with open('music_data/artists_TSKWPF.json', 'w', encoding = 'utf-8') as file_out:
-        file_out.write(file_in)
+def get_artist_id(sp, artists_name):
+    """
+    To search artists and get their 'id' parameter for list of names.
+    Also if needed we can add a new artist to the file artist_ids.json
+    and then get further details and attach to our data file data_artists.json.
+    """
+    artist_ids = {}
+    for name_string in artists_name:
+        """
+        Using exception as there is possibility of null result.
+        """
+        try:
+            result = sp.search(q = 'artist:'+ name_string, type = 'artist')
+            artist_ids[result['artists']['items'][0]['name']] = result['artists']['items'][0]['id']
+        except:
+            print('Not able to find')
 
-    print(time.time()-start_time)
+    return artist_ids
 
-if __name__ == '__main__':
-    #sp = configure()
-    #artist_ids = ['5K4W6rqBFWDnAN6FQUkS6x', '06HL4z0CvFAxyc27GXpf02', '0k17h0D3J5VfsdmQ1iZtE9']
-    #albums(sp, artist_ids)
-    with open('music_data/artists_TSKWPF.json', 'r', encoding= 'utf-8') as f:
+def initiate_artists_data():
+    sp = configure()
+
+    with open('music_data/artist_ids.json', 'r') as art:
+        artist_ids_dict = json.load(art)
+    
+    artist_ids = []
+    for key in artist_ids_dict:
+        artist_ids.append(artist_ids_dict[key])
+
+    peee = 0
+    data_all = {}
+    for id_ in artist_ids:
+        peee += 1
+        print(peee)
+        """
+        Even single ids are passed in list because the code was changed at latter stage
+        as passing the list to the above function was generating a 443 response
+        so so passed as single parameters to prevent any further changes.
+        """
+        file_in = albums(sp, [id_])
+        data_all[f'artist_{peee}'] = file_in
+
+    with open('music_data/data_artists.json', 'w', encoding = 'utf-8') as file_out:
+        file_out.write(json.dumps(data_all, indent=4))
+
+    with open('music_data/data_artists.json', 'r', encoding= 'utf-8') as f:
        val = json.load(f)
 
+    """
+    Just for verification prints out album names in the entire file.
+    """
     for key in val.keys():
-        for i in val[key]:
+        for _ in val[key]:
             for pee in range(0,len(val[key][0]['albums_full'])):
                 print(val[key][0]['albums_full'][pee]['album_name'])
+
+if __name__ == '__main__':
+    initiate_artists_data()
