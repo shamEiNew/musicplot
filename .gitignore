@@ -1,11 +1,5 @@
 env
 __pycache__
 .vscode
-gifs
 videomp4
-music_data
-ims
-*.txt
-*.png
-*.gif
 *.jpg
