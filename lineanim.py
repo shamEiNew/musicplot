@@ -1,16 +1,24 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import sys, random, json, os
+import sys, random, json, os, inspect
 import matplotlib.animation as animation
 from matplotlib.patches import Ellipse, Circle
-import matplotlib.dates as mdates
-import matplotlib.cbook as cbook
-from matplotlib.lines import Line2D
+#from matplotlib.cbook import cdates
+from matplotlib.markers import MarkerStyle
+#from matplotlib.lines import Line2D
 from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
 from matplotlib.font_manager import FontProperties
+import matplotlib.colors as mcolors
+import playlists as ply
 
-#fig = plt.figure(figsize=(10, 10), facecolor = 'black'
+"""
+Class for creating figure and subplots as there are multiple functions.
 
+"""
+p = list(mcolors.CSS4_COLORS.keys())
+for i in range(len(p)):
+    if i in ['black','grey','dimgrey','dimgray','darkslategrey','darkslategray', 'midnightblue',
+    'navy', 'darkblue','slategray','darkslateblue']:p.remove(i) 
 class canvas:
     def __init__(self, figsize, facecolor):
         self.figsize = figsize
@@ -26,7 +34,9 @@ class canvas:
         self.c = c
         return plt.subplot(self.rci, frameon = self.frame_bool, facecolor = self.c, projection = self.proj)
 
-#scattered ellipses
+"""
+The following is plot for random scatter ellipse.
+"""
 def scatter_ellipse(*args):
     NUM = 11
     ells = [Ellipse(xy=np.random.rand(2) * 15,
@@ -43,7 +53,9 @@ def scatter_ellipse(*args):
     ax.set_ylim(0, 15)
     return e
 
-#Scattered circles like rain
+"""
+The below function is for animating the above plot.
+"""
 def scatter_circles(*args):
     N = 40
     x = np.random.rand(N)
@@ -52,23 +64,28 @@ def scatter_circles(*args):
     area = (5 * np.random.rand(N))**2
     return plt.scatter(x, y, s=area, c=colors, alpha= 0.8)
 
-#Rainbow curves
-p = ['red', 'orange', 'gold', 'lawngreen', 'lightseagreen', 'royalblue', 'blueviolet',
- 'cyan', 'crimson','purple', 'maroon', 'indigo', 'navy', 'darkolivegreen', 'deeppink']
+
+"""
+The below function is meant for plotting lines in rainbow form
+"""
 def curve():
     x = np.arange(0, 2*np.pi, 0.1)
 
     lines = []
-    for i in range(0, 7):
-        line, = ax.plot(x, np.sin(x), color = p[i])
+    for _ in range(0, 7):
+        line, = ax.plot(x, np.sin(x), color = ['red', 'orange', 'gold', 'lawngreen', 'lightseagreen', 'royalblue','blueviolet'])
         lines.append(line,)
     return lines
-
+"""
+The below animates the above function.
+"""
 def curve_anim(i):
     x = np.arange(0, 2*np.pi, 0.1)
     for j in range(0, 7): lines[j].set_ydata(np.sin(x - (j/10) + i / 10))
     return lines
-
+"""
+The below is a polar curve while defining subplot change the projection to polar.
+"""
 def polar_curve():
     theta = np.arange(0, 6*np.pi, 0.05)
     r = ((1+ np.sqrt(5))/2)**(theta *(2/(np.pi)))
@@ -77,10 +94,14 @@ def polar_curve():
     ax.grid(True)
     ax.set_title("Golden Spiral", va = 'bottom')
     return r, theta
-
+"""
+The below animates the above plot.
+"""
 def curve_polar_anim(i):
     return ax.plot(r[:i], theta[:i], color = p[2])
-
+"""
+This is used for plotting music albums tracks and loudness for 1970s to 2010s.
+"""
 def music():
     with open('music_data/music.json') as out:
         data = json.load(out)
@@ -126,14 +147,11 @@ def music():
     #handles, labels = scatter.legend_elements(prop="sizes", alpha=0.6)
     #legend2 = ax.legend(handles, labels, loc="upper right", title="Sizes")
     return x_a, y_a, area, color
-
+"""
+This is used for animating plots.
+"""
 def music_plot(i):
     return ax.scatter(x_a[:i], y_a[:i], s = area[:i], c = color[:i], alpha = 1)
-
-def save_entity(file_name):
-    from matplotlib.animation import FFMpegWriter
-    writer = FFMpegWriter(fps=35, metadata=dict(artist='Sham'),  bitrate=1800)
-    ani.save(f"videomp4/{file_name}.mp4", writer=writer)
 
 def text_plot():
     plt.text(0.6, 0.7, "banogi \U0001F60D", size=40, rotation=0.,
@@ -156,86 +174,178 @@ def text_plot():
     #plt.savefig('dost.png')
     plt.show()
 
+def artist_plot(i_, artist_data):
+    
+    global artist_tracks_loudness 
+    artist_tracks_loudness = []
+
+    global artist_tracks_danceability
+    artist_tracks_danceability = []
+
+    global artist_tracks_speechiness
+    artist_tracks_speechiness =  []
+
+    global album_color
+    album_color = []
+
+    global album_popularity 
+    album_popularity = []
+    
+    global album_names
+    album_names = []
+
+    global y_pos
+
+    global color_ 
+    color_ = {}
+
+    loudest_track_name = ''
+    #sp = ply.configure('user')
+    if len(artist_data[f'artist_{i_}'][0]['albums_full']) > 0:
+
+        for j_ in range(0, len(artist_data[f'artist_{i_}'][0]['albums_full'])):
+
+            album_names.append(artist_data[f'artist_{i_}'][0]['albums_full'][j_]['album_name'])
+            album_popularity.append(artist_data[f'artist_{i_}'][0]['albums_full'][j_]['album_popularity'])
+            loudest_track = -60
+
+            for k_ in range(0, len(artist_data[f'artist_{i_}'][0]['albums_full'][j_]['tracks'])):
+
+                item = artist_data[f'artist_{i_}'][0]['albums_full'][j_]['tracks'][k_]['features'][0]
+
+                if artist_data[f'artist_{i_}'][0]['albums_full'][j_]['album_name'] != 'Ultraviolence - Audio Commentary':
+
+                    if item['loudness'] >= loudest_track:
+                        loudest_track = item['loudness']
+                        loudest_track_name = artist_data[f'artist_{i_}'][0]['albums_full'][j_]['tracks'][k_]['track_name']
+                        loudest_track_id = artist_data[f'artist_{i_}'][0]['albums_full'][j_]['tracks'][k_]['track_id']
+
+                    artist_tracks_loudness.append(item['loudness'])
+                    artist_tracks_danceability.append(item['danceability'])
+                    artist_tracks_speechiness.append(item['speechiness'])
+                    album_color.append(p[j_])
+                    color_[artist_data[f'artist_{i_}'][0]['albums_full'][j_]['album_name']] = p[j_]
+        
+        """
+        This part adds songs to the spotify.
+        """
+        #sp.user_playlist_add_tracks('0hczuz4ovfgx09ch7q216824z','3fpDpJpq2G5zgTURhFxy2W', [loudest_track_id])
+        popular_album = (album_names[album_popularity.index(max(album_popularity))].encode('utf-8').decode('utf-8'),
+        color_[album_names[album_popularity.index(max(album_popularity))]])
+
+    else:
+
+        popular_album = ["None", "black"]
+
+    y_pos = np.arange(len(album_names))*6
+    artist_tracks_loudness = np.abs(np.array(artist_tracks_loudness))
+
+    return color_, loudest_track_name, popular_album, album_popularity
+
+def artist_albums_plot(i_, artist_data):
+
+
+    color_, loudest_track_name, popular_album,  album_popularity = artist_plot(i_,artist_data)
+    #sp = ply.configure()
+    #sp.user_playlist_create('0hczuz4ovfgx09ch7q216824z', 'Louddddd', public =True,description= 'loud tracks I guess')
     """
-    Pass 2-tuple for frame size and color as string in canvas.
-    Pass row, column, index as 111, bool value, color, projection.
+    Scatter plot of Danceability vs Speechiness.
     """
+    ax0.spines['bottom'].set_color('w')
+    ax0.spines['top'].set_color('w')
+    ax0.spines['right'].set_color('w')
+    ax0.spines['left'].set_color('w')
+    ax0.tick_params(axis = 'y', colors = 'w')
+    ax0.tick_params(axis='x', colors='floralwhite')
+    ax0.set_xlabel('Danceability', color = 'w')
+    ax0.set_ylabel('Speechiness', color ='w')
+    ax0.set_title(f"{artist_data[f'artist_{i_}'][0]['artist_name']}", c = 'w')
+    
+    #ax0.scatter(artist_tracks_danceability, artist_tracks_speechiness, s= artist_tracks_loudness, c = album_color, marker = "+", alpha = 1)
+
+    """
+    Horizontal bar plot for album popularity
+    """
+    ax1.set_yticks(y_pos)
+    ax1.set_yticklabels(album_names, fontsize = 8, c='r')
+    ax1.set_xlabel('Album Popularity', fontsize = 8, c = 'w')
+    ax1.spines['bottom'].set_color('w')
+    ax1.spines['top'].set_color('w')
+    ax1.spines['right'].set_color('w')
+    ax1.spines['left'].set_color('r')
+    ax1.tick_params(axis = 'y', colors = 'w')
+    ax1.tick_params(axis='x', colors='w')
+    #ax1.barh(
+    #    y_pos,
+    #    album_popularity,
+    #    height = 0.5,
+    #    color = list(color_.values()),
+    #    align = 'center'
+    #    )
+
+    """
+    Adding name of popular album and loudest track on left upper corner.
+    """
+    plt.subplots_adjust(left = 0.3)
+    textstr = "\n".join([f"Popular Album\n{popular_album[0]}",f"Loudest Track\n{loudest_track_name}"])
+    plt.text(0.02, 0.9, textstr, fontsize=10, color = 'lime',
+    fontname = 'sans-serif',transform=plt.gcf().transFigure)
+    #plt.savefig(rf"ims\{artist_data[f'artist_{i_}'][0]['artist_name']}".replace(" ", "_"))
+    #plt.show()
+    #plt.clf()
+    #plt.close()
+
+
 def artist_anim(i):
-    return ax.scatter(artist_tracks_danceability[:i], artist_tracks_speechiness[:i], s= artist_tracks_loudness[:i],
-     c = album_color[:i])
+    scatter = ax0.scatter(artist_tracks_danceability[:i*20], artist_tracks_speechiness[:i*20], s= artist_tracks_loudness[:i*20],
+     c = album_color[:i*20])
+    bar = ax1.barh(y_pos[:i], album_popularity[:i], height = 0.5, color = list(color_.values()), align = 'center')
+    return bar, scatter
 
-figure = canvas((8, 8), 'white') 
-fig = figure._frame_()
-ax = figure._subplot_(211, True, 'white', None)
-#ax = ax = fig.add_subplot(111, projection='3d')
+"""
+Saving .mp4 files in videomp4
 
+"""
+def save_entity(ani, file_name):
+    from matplotlib.animation import FFMpegWriter
+    writer = FFMpegWriter(fps= 15, metadata=dict(artist='Sham'),  bitrate=1800)
+    ani.save(f"videomp4/{file_name}.mp4", writer=writer)
+
+"""
+Pass 2-tuple for frame size and color as string in canvas.
+Pass row, column, index as 111, bool value, color, projection.
+"""
+figure1 = figure = canvas((12, 10), 'black')
+fig2 = figure._frame_()
+ax = figure._subplot_(111, True, 'black', None)
 
 if __name__ =='__main__':
 
+    with open('music_data/data_artists.json', 'r', encoding = 'utf-8' ) as out_file:
+        artist_data = json.load(out_file)
+    
     m = artist_anim
+
+
+    for i_ in range(1, len(artist_data.keys())):
+        figure = canvas((12, 10), 'black')
+        fig1 = figure._frame_()
+        ax0 = figure._subplot_(211, True, 'black', None)
+        ax1 = figure._subplot_(212, True, 'black', None)
+        artist_albums_plot(i_, artist_data)
+
+        """
+        Animating part for music data of artists
+        """
+        ani = animation.FuncAnimation(fig1, m, frames = 60, interval=2, save_count=100)
+        #ani = animation.FuncAnimation(fig1, m, frames = 45, interval=2, save_count=100)
+        save_entity(ani, f"{artist_data[f'artist_{i_}'][0]['artist_name']}".replace(" ", "_"))
+        print(f"Done {artist_data[f'artist_{i_}'][0]['artist_name']}")
+        #plt.show()
+        plt.clf()
+        plt.close()
+    
     if m == curve_anim:lines = curve()
     if m == curve_polar_anim: r, theta = polar_curve()
     if m == music_plot: x_a, y_a, area, color = music()
-    
-    with open('music_data/data_artists.json', 'r', encoding='utf-8' ) as out_file:
-        artist_data = json.load(out_file)
-    artist_tracks_loudness = []
-    artist_tracks_danceability = []
-    artist_tracks_speechiness = []
-    album_color = []
-    color_ = {}
-    for i_ in range(1, len(artist_data.keys()) + 1):
-        if artist_data[f'artist_{i_}'][0]['artist_name'].encode('utf-8', 'ignore').decode('utf-8').lower() == "lana del rey":
-            for j_ in range(0, len(artist_data[f'artist_{i_}'][0]['albums_full'])):
-                for k_ in range(0, len(artist_data[f'artist_{i_}'][0]['albums_full'][j_]['tracks'])):
-                    item = artist_data[f'artist_{i_}'][0]['albums_full'][j_]['tracks'][k_]['features'][0]
-                    if artist_data[f'artist_{i_}'][0]['albums_full'][j_]['album_name'] != 'Ultraviolence - Audio Commentary':
-                        artist_tracks_loudness.append(item['loudness'])
-                        artist_tracks_danceability.append(item['danceability'])
-                        artist_tracks_speechiness.append(item['speechiness'])
-                        album_color.append(p[j_])
-                        color_[artist_data[f'artist_{i_}'][0]['albums_full'][j_]['album_name']] = p[j_]
-    
-    #print(color_)
-    artist_tracks_loudness = np.abs(np.array(artist_tracks_loudness))
-    #save_entity('ldr')
-
-    try:
-        if m is not None:
-            ani = animation.FuncAnimation(fig, m, frames = 150, interval=2, save_count=100)
-    except TypeError as t:
-        print('m has no value to animate')
-        raise t
-    ax.set_xlabel('Danceabiltiy')
-    ax.set_ylabel('Speechines')
-    ax.set_title("Lana Del Rey's albums")
-    legend_el = [Circle((1, 1), 10, facecolor= color_[i], label= i) for i in color_.keys()]
-    ax.legend(handles=legend_el, loc='upper center', bbox_to_anchor=(0.5, -0.5),
-    fancybox = True, prop = FontProperties().set_size('xx-small'))
-    from matplotlib.animation import FFMpegWriter
-    writer = FFMpegWriter(fps=35, metadata=dict(artist='Sham'),  bitrate=1800)
-    ani.save(f"videomp4/ldr.mp4", writer=writer)
-    #ax.scatter(artist_tracks_danceability, artist_tracks_speechiness, s= artist_tracks_loudness,
-    # c = album_color)
-
-    #legend_elements1 = [Line2D([0], [0], marker='o', color= color_[i], label= i,
-    #                  markerfacecolor=color_[i], markersize=1) for i in color_.keys()]
-    
-    #ax.scatter(artist_tracks_danceability, artist_tracks_speechiness, s= artist_tracks_loudness,
-    #c = album_color)
-    #ax.set_xticks(np.arange(0, 1.0))
-    #ax.set_yticks(np.arange(0.0, 1.1, 0.1))
-    #ax.set_ylim(0.0, 1.0)
-    #ax.grid(True)
-    #ax.legend()
-    #ax.xaxis.set_major_locator(MultipleLocator(0.1))
-    #ax.xaxis.set_major_formatter('{x:.0f}')
-
-    # For the minor ticks, use no labels; default NullFormatter.
-    #ax.view_init(elev=25., azim=-35)
-    #plt.xticks(fontsize = 55)
-    #plt.yticks(fontsize = 55)
-    #ax.yaxis.set_minor_locator(AutoMinorLocator())
-    #ax.xaxis.set_minor_locator(AutoMinorLocator())
-    #plt.savefig('temp_ldr.png')
-    plt.show()
+        

@@ -1,17 +1,21 @@
 import spotipy, json, time
-from spotipy.oauth2 import SpotifyClientCredentials
+from spotipy.oauth2 import SpotifyClientCredentials, SpotifyOAuth
 from os import environ
+import lineanim
 
 
-def configure():
+def configure(user):
     """
     Client id and secret are defined as environmental variables.
 
     """
+    scope = "playlist-modify-public"
     cs_id = environ['CLIENT_ID']
     cs_secret = environ['CLIENT_SECRET']
 
     client_credentials_manager = SpotifyClientCredentials(client_id=cs_id, client_secret=cs_secret)
+
+    if user == 'user':return spotipy.Spotify(auth_manager=SpotifyOAuth(client_id = cs_id, client_secret = cs_secret,redirect_uri='http://localhost:8888/callback', scope=scope))
     return spotipy.Spotify(client_credentials_manager = client_credentials_manager)
 
 def collect_data(sp, name, data, decade, mid, y):
@@ -149,7 +153,7 @@ def get_artist_id(sp, artists_name):
     return artist_ids
 
 def initiate_artists_data():
-    sp = configure()
+    sp = configure('client')
 
     with open('music_data/artist_ids.json', 'r') as art:
         artist_ids_dict = json.load(art)
